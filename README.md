@@ -1,1 +1,1 @@
-[Screenshot of the scene](docs/Capture.PNG)
+![Screenshot of the scene](docs/Capture.PNG)
