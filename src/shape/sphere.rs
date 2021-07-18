@@ -20,7 +20,7 @@ impl SphereShape {
 }
 
 impl Shape for SphereShape {
-    fn get_contact(&self, ray: &Ray) -> Option<RayContact> {
+    fn get_contact<'a>(&self, ray: &'a Ray) -> Option<RayContact<'a>> {
         let a = ray.direction.len_sqr();
         let b = 2.0
             * ray
@@ -45,12 +45,12 @@ impl Shape for SphereShape {
 
             if multiplier > 0.0 {
                 let position = ray.origin.plus(&ray.direction.times(multiplier));
-                let mut normal = position.minus(&self.position);
-                normal.normalize();
+                let normal = position.minus(&self.position).normalized();
 
                 Some(RayContact::new(
-                    normal.times(self.radius * 0.99).plus(&self.position),
+                    normal.times(self.radius).plus(&self.position),
                     normal,
+                    ray,
                 ))
             } else {
                 None

@@ -1,6 +1,4 @@
-use std::{
-    sync::{Arc, RwLock},
-};
+use std::sync::{Arc, RwLock};
 
 use glium::{
     glutin::{
@@ -10,7 +8,6 @@ use glium::{
     Display, Texture2d,
 };
 
-
 use crate::{
     camera::OrbitalCamera,
     jobs::JobRunner,
@@ -19,7 +16,10 @@ use crate::{
     texture::TextureGenerator,
 };
 
-use super::{scene::RaytracingScene, texture::{ColorColumnRange, IncrementalTextureHandle}};
+use super::{
+    scene::RaytracingScene,
+    texture::{ColorColumnRange, IncrementalTextureHandle},
+};
 
 const CAMERA_ROTATION_MULTIPLIER: f32 = 0.005;
 const MAX_THREAD_COUNT: u32 = 16;
@@ -43,7 +43,7 @@ pub struct RaytracingRunner {
 impl RaytracingRunner {
     pub fn new(width: u32, height: u32, focus: Vector) -> Self {
         let camera = OrbitalCamera::new(width, height, focus, 0.3);
-        let runner = Self {
+        let mut runner = Self {
             width,
             height,
             mouse_pressed: false,
@@ -55,6 +55,8 @@ impl RaytracingRunner {
             scene: Arc::new(RwLock::new(RaytracingScene::new(5))),
             texture_handle: IncrementalTextureHandle::new(width, height, 100000),
         };
+
+        runner.reset_and_recalculate_new_image();
 
         runner
     }
@@ -69,7 +71,7 @@ impl RaytracingRunner {
         }
     }
 
-    fn calculate_next_image(&mut self) {
+    fn start_calculating_next_image(&mut self) {
         let half_width = (self.width / 2) as i32;
         let half_height = (self.height / 2) as i32;
 
@@ -109,6 +111,12 @@ impl RaytracingRunner {
             x_range[0] += width_thread_chunk;
         }
     }
+
+    fn reset_and_recalculate_new_image(&mut self) {
+        self.texture_handle.reset();
+        self.runner.remove_all_handles();
+        self.start_calculating_next_image();
+    }
 }
 
 impl TextureGenerator for RaytracingRunner {
@@ -117,9 +125,9 @@ impl TextureGenerator for RaytracingRunner {
     }
 
     fn update_texture(&mut self, display: &Display) -> Texture2d {
-        self.calculate_next_image();
         self.collect_image();
         let texture = self.texture_handle.get_texture(display);
+        self.start_calculating_next_image();
 
         texture
     }
@@ -147,7 +155,7 @@ impl TextureGenerator for RaytracingRunner {
                                 CAMERA_ROTATION_MULTIPLIER * offset[1] as f32,
                             );
 
-                            self.texture_handle.reset();
+                            self.reset_and_recalculate_new_image();
                         }
 
                         self.previous_mouse_position = Some(position.clone());
@@ -156,7 +164,7 @@ impl TextureGenerator for RaytracingRunner {
                 glium::glutin::event::WindowEvent::MouseWheel { delta, .. } => {
                     if let MouseScrollDelta::LineDelta(_, y) = delta {
                         self.camera.delta_zoom(*y);
-                        self.texture_handle.reset();
+                        self.reset_and_recalculate_new_image();
                     }
                 }
                 _ => (),

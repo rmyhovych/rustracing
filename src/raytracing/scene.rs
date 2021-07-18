@@ -39,89 +39,43 @@ impl RaytracingScene {
     }
 
     pub fn get_pixel_color(&self, ray: Ray) -> Color {
-        self.project_ray(&ray, 0, None)
+        self.project_ray(&ray, 0)
     }
 
-    pub fn project_ray(
-        &self,
-        ray: &Ray,
-        recursive_index: u32,
-        shape_to_ignore: Option<usize>,
-    ) -> Color {
+    pub fn project_ray(&self, ray: &Ray, recursive_index: u32) -> Color {
         let mut color = Color::new(0.0, 0.0, 0.0);
         if recursive_index < self.max_bounce_count {
-            if let Some(contact) = self.find_closest_contact(&ray, shape_to_ignore) {
-                let shape = &self.shapes[contact.shape_id];
+            if let Some(contact) = self.find_closest_contact(&ray) {
+                let shape = &self.shapes[contact.get_shape()];
                 let shape_properties = shape.get_shape_properties();
 
-                let from_inside = ray.direction.dot(&contact.normal) > 0.0;
+                let from_inside = contact.is_from_inside();
 
                 let mut shape_color_retention = 1.0;
                 if !from_inside {
                     if let Some(shininess) = &shape_properties.shininess {
-                        let mut reflection = ray
-                            .direction
-                            .minus(&ray.direction.project_onto(&contact.normal).times(2.0));
-                        reflection.normalize();
+                        let new_ray = contact.get_random_outer_reflection();
 
-                        let mut new_direction = Vector::from(&contact.normal); /*
-                                                                               .times(shininess.value.acos())
-                                                                               .plus(&reflection.times(shininess.value.asin()));
-                                                                               */
-                        let max_rough_angle = shininess.roughness.asin();
-                        new_direction.rotate_around_vector(
-                            &new_direction.random_perpendicular(),
-                            thread_rng().gen_range(0.0..max_rough_angle),
-                        );
-
-                        if new_direction.dot(&contact.normal) > 0.0 {
-                            let new_ray = Ray {
-                                origin: contact.position,
-                                direction: new_direction,
-                            };
-
-                            let reflected_color = self.project_ray(
-                                &new_ray,
-                                recursive_index + 1,
-                                Some(contact.shape_id),
-                            );
-                            color.r += shape_color_retention * shininess.value * reflected_color.r;
-                            color.g += shape_color_retention * shininess.value * reflected_color.g;
-                            color.b += shape_color_retention * shininess.value * reflected_color.b;
-                        }
+                        let reflected_color = self.project_ray(&new_ray, recursive_index + 1);
+                        color.r += shape_color_retention * shininess.value * reflected_color.r;
+                        color.g += shape_color_retention * shininess.value * reflected_color.g;
+                        color.b += shape_color_retention * shininess.value * reflected_color.b;
 
                         shape_color_retention *= 1.0 - shininess.value;
                     }
                 }
 
                 if let Some(transparency) = &shape_properties.transparency {
-                    let contact_normal = contact.normal.times(if from_inside { -1.0 } else { 1.0 });
-                    let incident_angle = PI - ray.direction.angle_between(&contact_normal);
-                    let delta_angle = if from_inside {
-                        get_refracted_angle_delta(incident_angle, transparency.density, 1.0)
+                    let mut index_incident = 1.0;
+                    let mut index_refracted = 1.0;
+                    if from_inside {
+                        index_incident = transparency.density;
                     } else {
-                        get_refracted_angle_delta(incident_angle, 1.0, transparency.density)
-                    };
+                        index_refracted = transparency.density;
+                    }
 
-                    let rotation_axis = ray.direction.cross(&contact.normal);
-                    let mut new_direction = Vector::from(&ray.direction);
-
-                    new_direction.rotate_around_vector(&rotation_axis, delta_angle);
-
-                    let new_ray = Ray {
-                        origin: contact.position,
-                        direction: new_direction,
-                    };
-
-                    let reflected_color = self.project_ray(
-                        &new_ray,
-                        recursive_index + 1,
-                        if from_inside {
-                            Some(contact.shape_id)
-                        } else {
-                            None
-                        },
-                    );
+                    let new_ray = contact.get_refraction(index_incident, index_refracted);
+                    let reflected_color = self.project_ray(&new_ray, recursive_index + 1);
 
                     color.r += shape_color_retention * transparency.value * reflected_color.r;
                     color.g += shape_color_retention * transparency.value * reflected_color.g;
@@ -139,27 +93,16 @@ impl RaytracingScene {
         color
     }
 
-    fn find_closest_contact(
-        &self,
-        ray: &Ray,
-        shape_to_ignore: Option<usize>,
-    ) -> Option<RayContact> {
-        let mut closest_contact: Option<RayContact> = None;
+    fn find_closest_contact<'a>(&self, ray: &'a Ray) -> Option<RayContact<'a>> {
+        let mut closest_contact: Option<RayContact<'a>> = None;
         let mut closest_contact_distance = f32::MAX;
         for (shape_id, shape) in self.shapes.iter().enumerate() {
-            let mut ignore_shape = false;
-            if let Some(shape_id_to_ignore) = shape_to_ignore {
-                ignore_shape = shape_id_to_ignore == shape_id;
-            }
-
-            if !ignore_shape {
-                if let Some(mut contact) = shape.get_contact(&ray) {
-                    let contact_distance = ray.origin.distance_to_sqr(&contact.position);
-                    if contact_distance < closest_contact_distance {
-                        contact.shape_id = shape_id;
-                        closest_contact = Some(contact);
-                        closest_contact_distance = contact_distance;
-                    }
+            if let Some(mut contact) = shape.get_contact(&ray) {
+                let contact_distance = contact.get_distance_from_origin();
+                if contact_distance < closest_contact_distance {
+                    contact.set_shape(shape_id);
+                    closest_contact = Some(contact);
+                    closest_contact_distance = contact_distance;
                 }
             }
         }

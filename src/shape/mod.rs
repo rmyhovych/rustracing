@@ -24,7 +24,7 @@ pub struct ShapeProperties {
 }
 
 pub trait Shape: Sync + Send {
-    fn get_contact(&self, ray: &Ray) -> Option<RayContact>;
+    fn get_contact<'a>(&self, ray: &'a Ray) -> Option<RayContact<'a>>;
 
     fn get_shape_properties(&self) -> &ShapeProperties;
 }

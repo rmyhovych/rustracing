@@ -18,7 +18,7 @@ use shape::{
 };
 
 fn main() {
-    let mut scene = RaytracingRunner::new(600, 500, Vector::new(1.5, 0.0, -1.2));
+    let mut scene = RaytracingRunner::new(600, 500, Vector::new(1.5, -0.8, -1.2));
     scene.add_shape(SphereShape::new(
         ShapeProperties {
             color: Color::new(1.0, 0.2, 0.2),
@@ -54,7 +54,7 @@ fn main() {
                 density: 1.6,
             }),
         },
-        Vector::new(1.5, 0.0, -1.2),
+        Vector::new(1.5, -0.8, -1.2),
         0.2,
     ));
 
@@ -76,32 +76,6 @@ fn main() {
         },
         Vector::new(1.0, 0.0, -2.0),
         0.3,
-    ));
-
-    scene.add_shape(SphereShape::new(
-        ShapeProperties {
-            color: Color::new(0.01, 0.01, 0.01),
-            shininess: Some(Shininess {
-                value: 1.0,
-                roughness: 1.0,
-            }),
-            transparency: None,
-        },
-        Vector::new(0.0, 0.7, -1.1),
-        0.1,
-    ));
-
-    scene.add_shape(SphereShape::new(
-        ShapeProperties {
-            color: Color::new(0.01, 0.01, 0.01),
-            shininess: Some(Shininess {
-                value: 1.0,
-                roughness: 1.0,
-            }),
-            transparency: None,
-        },
-        Vector::new(0.9, 0.3, -0.8),
-        0.1,
     ));
 
     scene.add_shape(SphereShape::new(
@@ -138,7 +112,7 @@ fn main() {
             }),
             transparency: None,
         },
-        Vector::new(2.0, -0.75, -2.5),
+        Vector::new(0.8, -0.75, -1.2),
         0.5,
         0.5,
         0.5,

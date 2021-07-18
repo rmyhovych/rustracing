@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use crate::primitive::vector::Vector;
+use crate::primitive::{contact::RayContact, ray::Ray, vector::Vector};
 
 use super::{plane::PlaneShape, Shape, ShapeProperties};
 
@@ -118,10 +118,7 @@ impl CubeShape {
 }
 
 impl Shape for CubeShape {
-    fn get_contact(
-        &self,
-        ray: &crate::primitive::ray::Ray,
-    ) -> Option<crate::primitive::contact::RayContact> {
+    fn get_contact<'a>(&self, ray: &'a Ray) -> Option<RayContact<'a>> {
         let mut contact = None;
         for plane in &self.planes {
             contact = plane.get_contact(&ray);

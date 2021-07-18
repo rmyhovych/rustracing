@@ -1,3 +1,5 @@
+use std::io::Seek;
+
 use crate::primitive::{contact::RayContact, ray::Ray, vector::Vector};
 
 use super::{Shape, ShapeProperties};
@@ -50,7 +52,8 @@ impl PlaneShape {
 }
 
 impl Shape for PlaneShape {
-    fn get_contact(&self, ray: &Ray) -> Option<RayContact> {
+    /*
+    fn get_contact<'a>(&self, ray: &'a Ray) -> Option<RayContact<'a>> {
         if ray.direction.dot(&self.normal) < 0.0 {
             let perpendicular = ray.direction.project_onto(&self.normal);
             let perpendicular_distance = self.center.minus(&ray.origin).project_onto(&self.normal);
@@ -60,13 +63,50 @@ impl Shape for PlaneShape {
                 let contact_point = ray.origin.plus(&ray.direction.times(distance_multiplier));
                 let contact_from_center = self.center.minus(&contact_point);
 
-                let distance_from_center_length =
-                    contact_from_center.project_onto(&self.length_vector).len();
-                if distance_from_center_length < self.half_length {
-                    let distance_from_center_width =
-                        contact_from_center.project_onto(&self.width_vector).len();
-                    if distance_from_center_width < self.half_width {
-                        Some(RayContact::new(contact_point, Vector::from(&self.normal)))
+                let from_center_length = contact_from_center.project_onto(&self.length_vector);
+                if from_center_length.len() < self.half_length {
+                    let from_center_width = contact_from_center.project_onto(&self.width_vector);
+                    if contact_from_center.len() < self.half_width {
+                        let position = self
+                            .center
+                            .plus(&from_center_length)
+                            .plus(&from_center_width);
+
+                        Some(RayContact::new(position, Vector::from(&self.normal), ray))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+    */
+
+    fn get_contact<'a>(&self, ray: &'a Ray) -> Option<RayContact<'a>> {
+        if ray.direction.dot(&self.normal) < 0.0 {
+            let perpendicular = ray.direction.project_onto(&self.normal);
+            let perpendicular_distance = self.center.minus(&ray.origin).project_onto(&self.normal);
+            if perpendicular_distance.dot(&perpendicular) > 0.0 {
+                let distance_multiplier = perpendicular_distance.len() / perpendicular.len();
+
+                let contact_point = ray.origin.plus(&ray.direction.times(distance_multiplier));
+                let contact_from_center = self.center.minus(&contact_point);
+
+                let from_center_length = contact_from_center.project_onto(&self.length_vector);
+                if from_center_length.len() < self.half_length {
+                    let from_center_width = contact_from_center.project_onto(&self.width_vector);
+                    if from_center_width.len() < self.half_width {
+                        Some(RayContact::new(
+                            contact_point,
+                            Vector::from(&self.normal),
+                            ray,
+                        ))
                     } else {
                         None
                     }

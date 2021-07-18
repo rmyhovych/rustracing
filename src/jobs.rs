@@ -30,4 +30,8 @@ impl<R: Sync + Send + 'static> JobRunner<R> {
 
         results
     }
+
+    pub fn remove_all_handles(&mut self) {
+        self.jobs.clear();
+    }
 }

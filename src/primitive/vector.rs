@@ -107,6 +107,20 @@ impl Vector {
         perpendicular
     }
 
+    pub fn normalized(&self) -> Self {
+        let mut new_vec = Self::from(&self);
+        new_vec.normalize();
+
+        new_vec
+    }
+
+    pub fn normalized_to(&self, new_len: f32) -> Self {
+        let mut new_vec = Self::from(&self);
+        new_vec.normalize_to(new_len);
+
+        new_vec
+    }
+
     pub fn normalize(&mut self) {
         let len = self.len();
         self.x /= len;
