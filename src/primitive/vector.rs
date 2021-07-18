@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 
 use rand::{thread_rng, Rng};
 
+#[derive(Clone, Copy)]
 pub struct Vector {
     pub x: f32,
     pub y: f32,
@@ -49,6 +50,10 @@ impl Vector {
         return self.x * other.x + self.y * other.y + self.z * other.z;
     }
 
+    pub fn angle_between(&self, other: &Vector) -> f32 {
+        (self.dot(&other) / (self.len() * other.len())).acos()
+    }
+
     pub fn cross(&self, other: &Vector) -> Self {
         Self::new(
             self.y * other.z - self.z * other.y,
@@ -71,14 +76,14 @@ impl Vector {
             let perpendicular_x = self.minus(&parallel);
             let mut perpendicular_y = vector.cross(&perpendicular_x);
             perpendicular_y.normalize_to(perpendicular_x.len());
-    
+
             let rotated = parallel
                 .plus(&perpendicular_x.times(angle.cos()))
                 .plus(&perpendicular_y.times(angle.sin()));
-    
+
             self.x = rotated.x;
             self.y = rotated.y;
-            self.z = rotated.z;    
+            self.z = rotated.z;
         }
     }
 
@@ -121,7 +126,7 @@ impl Vector {
     }
 
     pub fn len_sqr(&self) -> f32 {
-        self.x * self.x + self.y * self.y + self.z * self.z
+        self.dot(&self)
     }
 
     pub fn distance_to(&self, other: &Vector) -> f32 {

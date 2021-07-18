@@ -54,18 +54,22 @@ impl Shape for PlaneShape {
         if ray.direction.dot(&self.normal) < 0.0 {
             let perpendicular = ray.direction.project_onto(&self.normal);
             let perpendicular_distance = self.center.minus(&ray.origin).project_onto(&self.normal);
-            let distance_multiplier = perpendicular_distance.len() / perpendicular.len();
+            if perpendicular_distance.dot(&perpendicular) > 0.0 {
+                let distance_multiplier = perpendicular_distance.len() / perpendicular.len();
 
-            let contact_point = ray.origin.plus(&ray.direction.times(distance_multiplier));
-            let contact_from_center = self.center.minus(&contact_point);
+                let contact_point = ray.origin.plus(&ray.direction.times(distance_multiplier));
+                let contact_from_center = self.center.minus(&contact_point);
 
-            let distance_from_center_length =
-                contact_from_center.project_onto(&self.length_vector).len();
-            if distance_from_center_length < self.half_length {
-                let distance_from_center_width =
-                    contact_from_center.project_onto(&self.width_vector).len();
-                if distance_from_center_width < self.half_width {
-                    Some(RayContact::new(contact_point, Vector::from(&self.normal)))
+                let distance_from_center_length =
+                    contact_from_center.project_onto(&self.length_vector).len();
+                if distance_from_center_length < self.half_length {
+                    let distance_from_center_width =
+                        contact_from_center.project_onto(&self.width_vector).len();
+                    if distance_from_center_width < self.half_width {
+                        Some(RayContact::new(contact_point, Vector::from(&self.normal)))
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }

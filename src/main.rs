@@ -9,15 +9,16 @@ mod raytracing;
 mod shape;
 mod texture;
 
-use std::f32::consts::PI;
-
 use display::run;
 use primitive::{color::Color, vector::Vector};
-use raytracing::RaytracingRunner;
-use shape::{plane::PlaneShape, sphere::SphereShape, ShapeProperties, Shininess};
+use raytracing::runner::RaytracingRunner;
+use shape::{
+    cube::CubeShape, plane::PlaneShape, sphere::SphereShape, ShapeProperties, Shininess,
+    Transparency,
+};
 
 fn main() {
-    let mut scene = RaytracingRunner::new(600, 500, Vector::new(0.0, 0.0, -1.5));
+    let mut scene = RaytracingRunner::new(600, 500, Vector::new(1.5, 0.0, -1.2));
     scene.add_shape(SphereShape::new(
         ShapeProperties {
             color: Color::new(1.0, 0.2, 0.2),
@@ -48,7 +49,10 @@ fn main() {
         ShapeProperties {
             color: Color::new(1.0, 1.0, 1.0),
             shininess: None,
-            transparency: None,
+            transparency: Some(Transparency {
+                value: 1.0,
+                density: 1.6,
+            }),
         },
         Vector::new(1.5, 0.0, -1.2),
         0.2,
@@ -66,12 +70,12 @@ fn main() {
 
     scene.add_shape(SphereShape::new(
         ShapeProperties {
-            color: Color::new(0.0, 1.0, 0.0),
+            color: Color::new(1.0, 0.4, 0.8),
             shininess: None,
             transparency: None,
         },
         Vector::new(1.0, 0.0, -2.0),
-        0.1,
+        0.3,
     ));
 
     scene.add_shape(SphereShape::new(
@@ -100,23 +104,17 @@ fn main() {
         0.1,
     ));
 
-    scene.add_shape(PlaneShape::new(
+    scene.add_shape(SphereShape::new(
         ShapeProperties {
-            color: Color::new(0.01, 0.01, 0.01),
-            shininess: Some(Shininess {
-                value: 1.0,
-                roughness: 1.0,
-            }),
+            color: Color::new(1.0, 1.0, 1.0),
+            shininess: None,
             transparency: None,
         },
-        Vector::new(0.0, -1.0, -1.5),
-        Vector::x(),
-        0.0,
-        6.0,
-        6.0,
+        Vector::new(3.0, 1.0, 0.0),
+        0.7,
     ));
 
-    scene.add_shape(PlaneShape::new(
+    scene.add_shape(CubeShape::new_inverted(
         ShapeProperties {
             color: Color::new(0.01, 0.01, 0.01),
             shininess: Some(Shininess {
@@ -125,11 +123,25 @@ fn main() {
             }),
             transparency: None,
         },
-        Vector::new(-3.0, 2.0, -1.5),
-        Vector::z(),
-        -PI / 2.0,
+        Vector::new(1.0, 1.0, -1.5),
         6.0,
         6.0,
+        4.0,
+    ));
+
+    scene.add_shape(CubeShape::new(
+        ShapeProperties {
+            color: Color::new(0.01, 0.01, 0.01),
+            shininess: Some(Shininess {
+                value: 1.0,
+                roughness: 1.0,
+            }),
+            transparency: None,
+        },
+        Vector::new(2.0, -0.75, -2.5),
+        0.5,
+        0.5,
+        0.5,
     ));
 
     run(scene);

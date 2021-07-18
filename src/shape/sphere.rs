@@ -35,20 +35,23 @@ impl Shape for SphereShape {
             let sqrt = inside_sqrt.sqrt();
             let points = [(-b + sqrt) / (2.0 * a), (-b - sqrt) / (2.0 * a)];
             let mut multiplier = points[0];
-            if points[1] >= 0.0 {
-                if points[0] >= 0.0 {
+            if points[1] > 0.0 {
+                if points[0] > 0.0 {
                     multiplier = points[0].min(points[1])
                 } else {
                     multiplier = points[1];
                 }
             }
 
-            if multiplier >= 0.0 {
+            if multiplier > 0.0 {
                 let position = ray.origin.plus(&ray.direction.times(multiplier));
                 let mut normal = position.minus(&self.position);
                 normal.normalize();
 
-                Some(RayContact::new(position, normal))
+                Some(RayContact::new(
+                    normal.times(self.radius * 0.99).plus(&self.position),
+                    normal,
+                ))
             } else {
                 None
             }

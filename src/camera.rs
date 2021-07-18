@@ -4,6 +4,7 @@ use rand::{thread_rng, Rng};
 
 use crate::primitive::{ray::Ray, vector::Vector};
 
+#[derive(Clone, Copy)]
 pub struct Camera {
     position: Vector,
     theta: f32,
@@ -54,10 +55,8 @@ impl Camera {
         ray.direction.y += self.pixel_angle * pixel_offset[1] as f32
             + rng.gen_range((-self.pixel_angle / 2.0)..(self.pixel_angle / 2.0));
 
-        ray.direction
-            .rotate_around_vector(&Vector::x(), self.phi);
-        ray.direction
-            .rotate_around_vector(&Vector::y(), self.theta);
+        ray.direction.rotate_around_vector(&Vector::x(), self.phi);
+        ray.direction.rotate_around_vector(&Vector::y(), self.theta);
 
         ray
     }
@@ -65,6 +64,7 @@ impl Camera {
 
 /*-----------------------------------------------------------------------------------------------*/
 
+#[derive(Clone, Copy)]
 pub struct OrbitalCamera {
     camera: Camera,
     focus: Vector,
