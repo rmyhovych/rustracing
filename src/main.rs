@@ -13,7 +13,7 @@ use display::run;
 use primitive::{color::Color, vector::Vector};
 use raytracing::runner::RaytracingRunner;
 use shape::{
-    cube::CubeShape, plane::PlaneShape, sphere::SphereShape, ShapeProperties, Shininess,
+    cube::CubeShape, sphere::SphereShape, ShapeProperties, Shininess,
     Transparency,
 };
 

@@ -1,24 +1,10 @@
-use std::{
-    f32::consts::PI,
-    sync::{Arc, RwLock},
-};
+use std::f32::consts::PI;
 
-use glium::{
-    glutin::{
-        dpi::PhysicalPosition,
-        event::{Event, MouseScrollDelta},
-    },
-    texture::RawImage2d,
-    Display, Texture2d,
-};
 use rand::{thread_rng, Rng};
 
 use crate::{
-    camera::OrbitalCamera,
-    jobs::JobRunner,
     primitive::{color::Color, contact::RayContact, ray::Ray, vector::Vector},
     shape::Shape,
-    texture::TextureGenerator,
 };
 
 fn get_refracted_angle_delta(

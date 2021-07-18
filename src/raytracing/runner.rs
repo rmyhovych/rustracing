@@ -1,5 +1,4 @@
 use std::{
-    f32::consts::PI,
     sync::{Arc, RwLock},
 };
 
@@ -8,15 +7,14 @@ use glium::{
         dpi::PhysicalPosition,
         event::{Event, MouseScrollDelta},
     },
-    texture::RawImage2d,
     Display, Texture2d,
 };
-use rand::{thread_rng, Rng};
+
 
 use crate::{
     camera::OrbitalCamera,
     jobs::JobRunner,
-    primitive::{color::Color, contact::RayContact, ray::Ray, vector::Vector},
+    primitive::{color::Color, vector::Vector},
     shape::Shape,
     texture::TextureGenerator,
 };
@@ -44,8 +42,8 @@ pub struct RaytracingRunner {
 
 impl RaytracingRunner {
     pub fn new(width: u32, height: u32, focus: Vector) -> Self {
-        let mut camera = OrbitalCamera::new(width, height, focus, 0.3);
-        let mut runner = Self {
+        let camera = OrbitalCamera::new(width, height, focus, 0.3);
+        let runner = Self {
             width,
             height,
             mouse_pressed: false,

@@ -1,25 +1,6 @@
-use std::{
-    f32::consts::PI,
-    sync::{Arc, RwLock},
-};
+use glium::{texture::RawImage2d, Display, Texture2d};
 
-use glium::{
-    glutin::{
-        dpi::PhysicalPosition,
-        event::{Event, MouseScrollDelta},
-    },
-    texture::RawImage2d,
-    Display, Texture2d,
-};
-use rand::{thread_rng, Rng};
-
-use crate::{
-    camera::OrbitalCamera,
-    jobs::JobRunner,
-    primitive::{color::Color, contact::RayContact, ray::Ray, vector::Vector},
-    shape::Shape,
-    texture::TextureGenerator,
-};
+use crate::primitive::color::Color;
 
 /*-----------------------------------------------------------------------------------------------*/
 
