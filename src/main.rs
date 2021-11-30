@@ -3,7 +3,7 @@ extern crate glium;
 
 mod camera;
 mod display;
-mod jobs;
+mod threadpool;
 mod primitive;
 mod raytracing;
 mod shape;

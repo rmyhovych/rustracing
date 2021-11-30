@@ -20,6 +20,8 @@ pub struct IncrementalTextureHandle {
     data: Vec<Color>,
     counts: Vec<u32>,
     max_count: u32,
+
+    is_invalid: bool,
 }
 
 impl IncrementalTextureHandle {
@@ -36,6 +38,8 @@ impl IncrementalTextureHandle {
             data,
             counts,
             max_count,
+
+            is_invalid: true,
         }
     }
 
@@ -64,18 +68,29 @@ impl IncrementalTextureHandle {
         }
     }
 
-    pub fn reset(&mut self) {
+    pub fn invalidate(&mut self) {
+        self.is_invalid = true;
+    }
+
+    pub fn get_texture(&mut self, display: &Display) -> Texture2d {
+        let texture = Texture2d::new(
+            display,
+            RawImage2d::from_raw_rgb(self.data.clone(), (self.width, self.height)),
+        )
+        .unwrap();
+
+        if self.is_invalid {
+            self.reset();
+            self.is_invalid = false;
+        }
+
+        texture
+    }
+
+    fn reset(&mut self) {
         for i in 0..self.data.len() {
             self.data[i as usize] = Color::new(0.0, 0.0, 0.0);
             self.counts[i as usize] = 0;
         }
-    }
-
-    pub fn get_texture(&self, display: &Display) -> Texture2d {
-        Texture2d::new(
-            display,
-            RawImage2d::from_raw_rgb(self.data.clone(), (self.width, self.height)),
-        )
-        .unwrap()
     }
 }

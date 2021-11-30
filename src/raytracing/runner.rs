@@ -10,7 +10,7 @@ use glium::{
 
 use crate::{
     camera::OrbitalCamera,
-    jobs::JobRunner,
+    threadpool::ThreadPool,
     primitive::{color::Color, vector::Vector},
     shape::Shape,
     texture::TextureGenerator,
@@ -22,7 +22,7 @@ use super::{
 };
 
 const CAMERA_ROTATION_MULTIPLIER: f32 = 0.005;
-const MAX_THREAD_COUNT: u32 = 16;
+const PARALLEL_JOB_COUNT: u32 = 100;
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -35,15 +35,15 @@ pub struct RaytracingRunner {
 
     camera: OrbitalCamera,
 
-    runner: JobRunner<ColorColumnRange>,
+    work_pool: ThreadPool<ColorColumnRange>,
     scene: Arc<RwLock<RaytracingScene>>,
     texture_handle: IncrementalTextureHandle,
 }
 
 impl RaytracingRunner {
     pub fn new(width: u32, height: u32, focus: Vector) -> Self {
-        let camera = OrbitalCamera::new(width, height, focus, 0.3);
-        let mut runner = Self {
+        let camera = OrbitalCamera::new(width, height, focus, 1.0);
+        Self {
             width,
             height,
             mouse_pressed: false,
@@ -51,14 +51,10 @@ impl RaytracingRunner {
 
             camera,
 
-            runner: JobRunner::new(),
+            work_pool: ThreadPool::new(8),
             scene: Arc::new(RwLock::new(RaytracingScene::new(5))),
             texture_handle: IncrementalTextureHandle::new(width, height, 100000),
-        };
-
-        runner.reset_and_recalculate_new_image();
-
-        runner
+        }
     }
 
     pub fn add_shape(&mut self, shape: impl Shape + 'static) {
@@ -66,7 +62,7 @@ impl RaytracingRunner {
     }
 
     fn collect_image(&mut self) {
-        for color_range in self.runner.wait_for_all_to_finish().into_iter() {
+        for color_range in self.work_pool.wait_for_finish().into_iter() {
             self.texture_handle.add_color_range(color_range);
         }
     }
@@ -75,7 +71,7 @@ impl RaytracingRunner {
         let half_width = (self.width / 2) as i32;
         let half_height = (self.height / 2) as i32;
 
-        let width_thread_chunk = self.width / MAX_THREAD_COUNT;
+        let width_thread_chunk = self.width / PARALLEL_JOB_COUNT;
 
         let mut x_range: [u32; 2] = [0, 0];
         let height = self.height;
@@ -87,7 +83,7 @@ impl RaytracingRunner {
             let scene = Arc::clone(&self.scene);
 
             let camera = self.camera;
-            self.runner.run_on_thread(move || -> ColorColumnRange {
+            self.work_pool.run(move || -> ColorColumnRange {
                 let mut color_range = ColorColumnRange {
                     starting_column: x_range_to_cover[0],
                     color_columns: Vec::new(),
@@ -112,10 +108,8 @@ impl RaytracingRunner {
         }
     }
 
-    fn reset_and_recalculate_new_image(&mut self) {
-        self.texture_handle.reset();
-        self.runner.remove_all_handles();
-        self.start_calculating_next_image();
+    fn invalidate_image(&mut self) {
+        self.texture_handle.invalidate();
     }
 }
 
@@ -155,21 +149,28 @@ impl TextureGenerator for RaytracingRunner {
                                 CAMERA_ROTATION_MULTIPLIER * offset[1] as f32,
                             );
 
-                            self.reset_and_recalculate_new_image();
+                            self.invalidate_image();
                         }
 
                         self.previous_mouse_position = Some(position.clone());
                     }
                 }
                 glium::glutin::event::WindowEvent::MouseWheel { delta, .. } => {
-                    if let MouseScrollDelta::LineDelta(_, y) = delta {
-                        self.camera.delta_zoom(*y);
-                        self.reset_and_recalculate_new_image();
-                    }
+                    let y = match delta {
+                        MouseScrollDelta::LineDelta(_, y) => *y,
+                        MouseScrollDelta::PixelDelta(position) => 0.1 * (position.y as f32),
+                    };
+
+                    self.camera.delta_zoom(y);
+                    self.invalidate_image();
                 }
                 _ => (),
             },
             _ => (),
         };
+    }
+
+    fn stop(&mut self) {
+        self.work_pool.stop_threads();
     }
 }

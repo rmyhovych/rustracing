@@ -6,4 +6,6 @@ pub trait TextureGenerator {
     fn update_texture(&mut self, display: &Display) -> Texture2d;
 
     fn handle_event<T: 'static>(&mut self, event: &event::Event<T>);
+
+    fn stop(&mut self);
 }

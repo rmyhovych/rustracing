@@ -1,15 +1,12 @@
-
-
 use glium::glutin::dpi::LogicalSize;
 use glium::glutin::event::Event;
 use glium::glutin::event_loop::EventLoop;
 use glium::index::PrimitiveType;
 
-
 use glium::glutin::event::StartCause;
 use glium::glutin::event_loop::ControlFlow;
 
-use glium::{Display};
+use glium::Display;
 use std::time::{Duration, Instant};
 
 use glium::{glutin, IndexBuffer, Surface, VertexBuffer};
@@ -169,7 +166,10 @@ pub fn run(mut image_builder: impl TextureGenerator + 'static) {
             image_builder.handle_event(event);
             match event {
                 glutin::event::Event::WindowEvent { event, .. } => match event {
-                    glutin::event::WindowEvent::CloseRequested => action = Action::Stop,
+                    glutin::event::WindowEvent::CloseRequested => {
+                        action = Action::Stop;
+                        image_builder.stop();
+                    }
                     _ => (),
                 },
                 _ => (),
