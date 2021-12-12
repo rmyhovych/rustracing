@@ -955,6 +955,7 @@ version = "0.1.0"
 dependencies = [
  "glium",
  "rand",
+ "threadpool",
 ]
 
 [[package]]
@@ -1077,6 +1078,11 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "threadpool"
+version = "0.1.0"
+source = "git+https://github.com/rmyhovych/threadpool#9e521de141d0cec1bdd7c02b57702deaa934991a"
 
 [[package]]
 name = "toml"

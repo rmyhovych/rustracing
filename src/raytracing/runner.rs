@@ -7,10 +7,10 @@ use glium::{
     },
     Display, Texture2d,
 };
+use threadpool::ThreadPool;
 
 use crate::{
     camera::OrbitalCamera,
-    threadpool::ThreadPool,
     primitive::{color::Color, vector::Vector},
     shape::Shape,
     texture::TextureGenerator,
@@ -52,7 +52,7 @@ impl RaytracingRunner {
             camera,
 
             work_pool: ThreadPool::new(8),
-            scene: Arc::new(RwLock::new(RaytracingScene::new(5))),
+            scene: Arc::new(RwLock::new(RaytracingScene::new(10))),
             texture_handle: IncrementalTextureHandle::new(width, height, 100000),
         }
     }
@@ -62,7 +62,7 @@ impl RaytracingRunner {
     }
 
     fn collect_image(&mut self) {
-        for color_range in self.work_pool.wait_for_finish().into_iter() {
+        for color_range in self.work_pool.collect_results() {
             self.texture_handle.add_color_range(color_range);
         }
     }
