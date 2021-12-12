@@ -22,7 +22,6 @@ use super::{
 };
 
 const CAMERA_ROTATION_MULTIPLIER: f32 = 0.005;
-const PARALLEL_JOB_COUNT: u32 = 100;
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -51,8 +50,8 @@ impl RaytracingRunner {
 
             camera,
 
-            work_pool: ThreadPool::new(8),
-            scene: Arc::new(RwLock::new(RaytracingScene::new(10))),
+            work_pool: ThreadPool::new(10),
+            scene: Arc::new(RwLock::new(RaytracingScene::new(6))),
             texture_handle: IncrementalTextureHandle::new(width, height, 100000),
         }
     }
@@ -71,13 +70,12 @@ impl RaytracingRunner {
         let half_width = (self.width / 2) as i32;
         let half_height = (self.height / 2) as i32;
 
-        let width_thread_chunk = self.width / PARALLEL_JOB_COUNT;
+        let width_thread_chunk = 1;
 
         let mut x_range: [u32; 2] = [0, 0];
         let height = self.height;
         while x_range[1] < self.width {
-            x_range[1] = x_range[0] + width_thread_chunk;
-            x_range[1] = self.width.min(x_range[1]);
+            x_range[1] = self.width.min(x_range[0] + width_thread_chunk);
 
             let x_range_to_cover = x_range.clone();
             let scene = Arc::clone(&self.scene);
