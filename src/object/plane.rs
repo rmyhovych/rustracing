@@ -1,12 +1,8 @@
-use std::io::Seek;
-
 use crate::primitive::{contact::RayContact, ray::Ray, vector::Vector};
 
-use super::{Shape, ShapeProperties};
+use super::Shape;
 
 pub struct PlaneShape {
-    properties: ShapeProperties,
-
     center: Vector,
     normal: Vector,
 
@@ -19,7 +15,6 @@ pub struct PlaneShape {
 
 impl PlaneShape {
     pub fn new(
-        properties: ShapeProperties,
         center: Vector,
         rotation_vector: Vector,
         rotation_angle: f32,
@@ -37,8 +32,6 @@ impl PlaneShape {
         length_vector.normalize();
 
         Self {
-            properties,
-
             center,
             normal,
 
@@ -119,9 +112,5 @@ impl Shape for PlaneShape {
         } else {
             None
         }
-    }
-
-    fn get_shape_properties(&self) -> &ShapeProperties {
-        &self.properties
     }
 }

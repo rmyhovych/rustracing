@@ -1,21 +1,15 @@
 use crate::primitive::{contact::RayContact, ray::Ray, vector::Vector};
 
-use super::{Shape, ShapeProperties};
+use super::Shape;
 
 pub struct SphereShape {
-    shape_properties: ShapeProperties,
-
     position: Vector,
     radius: f32,
 }
 
 impl SphereShape {
-    pub fn new(shape_properties: ShapeProperties, position: Vector, radius: f32) -> Self {
-        Self {
-            shape_properties,
-            position,
-            radius,
-        }
+    pub fn new(position: Vector, radius: f32) -> Self {
+        Self { position, radius }
     }
 }
 
@@ -58,9 +52,5 @@ impl Shape for SphereShape {
         } else {
             None
         }
-    }
-
-    fn get_shape_properties(&self) -> &ShapeProperties {
-        &self.shape_properties
     }
 }

@@ -11,8 +11,8 @@ use threadpool::ThreadPool;
 
 use crate::{
     camera::OrbitalCamera,
+    object::{Object, PhysicalObject, Shape, ShapeProperties},
     primitive::{color::Color, vector::Vector},
-    shape::Shape,
     texture::TextureGenerator,
 };
 
@@ -56,8 +56,11 @@ impl RaytracingRunner {
         }
     }
 
-    pub fn add_shape(&mut self, shape: impl Shape + 'static) {
-        self.scene.write().unwrap().add_shape(Box::new(shape));
+    pub fn add_object(&mut self, properties: ShapeProperties, shape: impl Shape + 'static) {
+        self.scene
+            .write()
+            .unwrap()
+            .add_object(PhysicalObject::new(properties, shape));
     }
 
     fn collect_image(&mut self) {

@@ -1,10 +1,8 @@
 use std::f32::consts::PI;
 
-use rand::{thread_rng, Rng};
-
 use crate::{
-    primitive::{color::Color, contact::RayContact, ray::Ray, vector::Vector},
-    shape::Shape,
+    object::{Object, ShapeType},
+    primitive::{color::Color, contact::RayContact, ray::Ray},
 };
 
 fn get_refracted_angle_delta(
@@ -21,86 +19,79 @@ fn get_refracted_angle_delta(
 }
 
 pub struct RaytracingScene {
-    shapes: Vec<Box<dyn Shape>>,
+    objects: Vec<Box<dyn Object>>,
 
-    max_bounce_count: u32,
+    max_bounce_count: usize,
 }
 
 impl RaytracingScene {
-    pub fn new(max_bounce_count: u32) -> Self {
+    pub fn new(max_bounce_count: usize) -> Self {
         Self {
-            shapes: Vec::new(),
+            objects: Vec::new(),
             max_bounce_count,
         }
     }
 
-    pub fn add_shape(&mut self, shape: Box<dyn Shape>) {
-        self.shapes.push(shape);
+    pub fn add_object<O: Object + 'static>(&mut self, object: O) {
+        self.objects.push(Box::new(object));
     }
 
     pub fn get_pixel_color(&self, ray: Ray) -> Color {
-        self.project_ray(&ray, 0)
+        self.project_ray(ray, self.max_bounce_count)
     }
 
-    pub fn project_ray(&self, ray: &Ray, recursive_index: u32) -> Color {
-        let mut color = Color::new(0.0, 0.0, 0.0);
-        if recursive_index < self.max_bounce_count {
-            if let Some(contact) = self.find_closest_contact(&ray) {
-                let shape = &self.shapes[contact.get_shape()];
-                let shape_properties = shape.get_shape_properties();
+    fn project_ray(&self, ray: Ray, bounces_left: usize) -> Color {
+        if bounces_left == 0 {
+            Color::zero()
+        } else if let Some(contact) = self.find_closest_contact(&ray) {
+            let object = &self.objects[contact.get_object_id()];
+            let properties = object.get_properties();
 
-                let from_inside = contact.is_from_inside();
+            match properties.shape_type {
+                ShapeType::Emitter => properties.color.clone(),
+                ShapeType::Reflector {
+                    transparency,
+                    roughness,
+                    density,
+                } => {
+                    let from_inside = contact.is_from_inside();
 
-                let mut shape_color_retention = 1.0;
-                if !from_inside {
-                    if let Some(shininess) = &shape_properties.shininess {
-                        let new_ray = contact.get_random_outer_reflection();
-
-                        let reflected_color = self.project_ray(&new_ray, recursive_index + 1);
-                        color.r += shape_color_retention * shininess.value * reflected_color.r;
-                        color.g += shape_color_retention * shininess.value * reflected_color.g;
-                        color.b += shape_color_retention * shininess.value * reflected_color.b;
-
-                        shape_color_retention *= 1.0 - shininess.value;
-                    }
-                }
-
-                if let Some(transparency) = &shape_properties.transparency {
-                    let mut index_incident = 1.0;
-                    let mut index_refracted = 1.0;
                     if from_inside {
-                        index_incident = transparency.density;
+                        let inside_refraction_ray = contact.get_refraction(density, 1.0);
+                        self.project_ray(inside_refraction_ray, bounces_left - 1)
                     } else {
-                        index_refracted = transparency.density;
+                        let mut color = Color::zero();
+                        if transparency < 1.0 {
+                            let reflection_ray = contact.get_outer_reflection(roughness);
+                            let reflection_color =
+                                self.project_ray(reflection_ray, bounces_left - 1);
+                            color = color.plus(&reflection_color.times(1.0 - transparency));
+                        }
+
+                        if transparency > 0.0 {
+                            let refraction_ray = contact.get_refraction(1.0, density);
+                            let refraction_color =
+                                self.project_ray(refraction_ray, bounces_left - 1);
+                            color = color.plus(&refraction_color.times(transparency));
+                        }
+
+                        color.filter(&properties.color)
                     }
-
-                    let new_ray = contact.get_refraction(index_incident, index_refracted);
-                    let reflected_color = self.project_ray(&new_ray, recursive_index + 1);
-
-                    color.r += shape_color_retention * transparency.value * reflected_color.r;
-                    color.g += shape_color_retention * transparency.value * reflected_color.g;
-                    color.b += shape_color_retention * transparency.value * reflected_color.b;
-
-                    shape_color_retention *= 1.0 - transparency.value;
                 }
-
-                color.r += shape_color_retention * shape_properties.color.r;
-                color.g += shape_color_retention * shape_properties.color.g;
-                color.b += shape_color_retention * shape_properties.color.b;
             }
+        } else {
+            Color::zero()
         }
-
-        color
     }
 
     fn find_closest_contact<'a>(&self, ray: &'a Ray) -> Option<RayContact<'a>> {
         let mut closest_contact: Option<RayContact<'a>> = None;
         let mut closest_contact_distance = f32::MAX;
-        for (shape_id, shape) in self.shapes.iter().enumerate() {
-            if let Some(mut contact) = shape.get_contact(&ray) {
+        for (object_id, object) in self.objects.iter().enumerate() {
+            if let Some(mut contact) = object.get_contact(&ray) {
                 let contact_distance = contact.get_distance_from_origin();
                 if contact_distance < closest_contact_distance {
-                    contact.set_shape(shape_id);
+                    contact.set_object_id(object_id);
                     closest_contact = Some(contact);
                     closest_contact_distance = contact_distance;
                 }
