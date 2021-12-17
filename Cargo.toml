@@ -7,5 +7,5 @@ edition = "2018"
 
 [dependencies]
 glium = "0.29.1"
-rand = "*"
+rand = "0.6.5"
 threadpool = {git = "https://github.com/rmyhovych/threadpool"}

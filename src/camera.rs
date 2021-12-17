@@ -51,9 +51,9 @@ impl Camera {
 
         let mut rng = thread_rng();
         ray.direction.x += self.pixel_angle * pixel_offset[0] as f32
-            + rng.gen_range((-self.pixel_angle / 2.0)..(self.pixel_angle / 2.0));
+            + rng.gen_range(-self.pixel_angle / 2.0, self.pixel_angle / 2.0);
         ray.direction.y += self.pixel_angle * pixel_offset[1] as f32
-            + rng.gen_range((-self.pixel_angle / 2.0)..(self.pixel_angle / 2.0));
+            + rng.gen_range(-self.pixel_angle / 2.0, self.pixel_angle / 2.0);
 
         ray.direction.rotate_around_vector(&Vector::x(), self.phi);
         ray.direction.rotate_around_vector(&Vector::y(), self.theta);

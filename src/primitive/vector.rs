@@ -103,7 +103,7 @@ impl Vector {
             Vector::new(0.0, 0.0, 0.0)
         };
 
-        perpendicular.rotate_around_vector(&self, thread_rng().gen_range(0.0..2.0 * PI));
+        perpendicular.rotate_around_vector(&self, thread_rng().gen_range(0.0, 2.0 * PI));
         perpendicular
     }
 

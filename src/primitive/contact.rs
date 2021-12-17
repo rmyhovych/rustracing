@@ -99,8 +99,10 @@ impl<'a> RayContact<'a> {
     fn get_random_outer_reflection(&self) -> Ray {
         let random_perpendicular = self.normal.random_perpendicular();
         let mut direction = Vector::from(&self.normal);
-        direction
-            .rotate_around_vector(&random_perpendicular, thread_rng().gen_range(0.0..PI / 2.0));
+        direction.rotate_around_vector(
+            &random_perpendicular,
+            (thread_rng().gen_range(-1.0, 1.0) as f32).acos() / 2.0,
+        );
 
         Ray {
             origin: self.position_outer.clone(),
