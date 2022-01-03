@@ -53,6 +53,30 @@ fn main() {
 
     scene.add_object(
         ShapeProperties {
+            color: Color::new(0.2, 0.2, 1.0),
+            shape_type: ShapeType::Reflector {
+                transparency: 1.0,
+                roughness: 1.0,
+                density: 1.6,
+            },
+        },
+        SphereShape::new(Vector::new(1.9, -0.8, -1.2), 0.2),
+    );
+
+    scene.add_object(
+        ShapeProperties {
+            color: Color::new(1.0, 0.2, 0.2),
+            shape_type: ShapeType::Reflector {
+                transparency: 1.0,
+                roughness: 1.0,
+                density: 1.6,
+            },
+        },
+        SphereShape::new(Vector::new(1.1, -0.8, -1.2), 0.2),
+    );
+    
+    scene.add_object(
+        ShapeProperties {
             color: Color::new(1.0, 1.0, 1.0),
             shape_type: ShapeType::Emitter,
         },

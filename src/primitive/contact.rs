@@ -101,7 +101,7 @@ impl<'a> RayContact<'a> {
         let mut direction = Vector::from(&self.normal);
         direction.rotate_around_vector(
             &random_perpendicular,
-            (thread_rng().gen_range(-1.0, 1.0) as f32).acos() / 2.0,
+            (thread_rng().gen_range(0.0, 1.0) as f32).acos(),
         );
 
         Ray {

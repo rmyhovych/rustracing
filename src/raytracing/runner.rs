@@ -41,7 +41,7 @@ pub struct RaytracingRunner {
 
 impl RaytracingRunner {
     pub fn new(width: u32, height: u32, focus: Vector) -> Self {
-        let camera = OrbitalCamera::new(width, height, focus, 1.0);
+        let camera = OrbitalCamera::new(width, height, focus, 1.0, 0.1);
         Self {
             width,
             height,

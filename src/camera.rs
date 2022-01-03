@@ -4,85 +4,45 @@ use rand::{thread_rng, Rng};
 
 use crate::primitive::{ray::Ray, vector::Vector};
 
-#[derive(Clone, Copy)]
-pub struct Camera {
-    position: Vector,
-    theta: f32,
-    phi: f32,
-
-    pixel_angle: f32,
-}
-
-impl Camera {
-    pub fn new(
-        _screen_width: u32,
-        screen_height: u32,
-        position: Vector,
-        theta: f32,
-        phi: f32,
-    ) -> Self {
-        let viewing_angle = PI / 2.0;
-        let pixel_angle = viewing_angle / screen_height as f32;
-        Self {
-            position,
-            theta,
-            phi,
-            pixel_angle,
-        }
-    }
-
-    pub fn translate(&mut self, x: f32, y: f32, z: f32) {
-        self.position.x += x;
-        self.position.y += y;
-        self.position.z += z;
-    }
-
-    pub fn rotate(&mut self, dtheta: f32, dphi: f32) {
-        self.theta += dtheta;
-        self.phi += dphi;
-        self.phi = self.phi.min((PI / 2.0) - 0.01).max((-PI / 2.0) + 0.01);
-    }
-
-    pub fn sample_pixel_ray(&self, pixel_offset: [i32; 2]) -> Ray {
-        let mut ray = Ray {
-            origin: Vector::from(&self.position),
-            direction: Vector::z(),
-        };
-
-        let mut rng = thread_rng();
-        ray.direction.x += self.pixel_angle * pixel_offset[0] as f32
-            + rng.gen_range(-self.pixel_angle / 2.0, self.pixel_angle / 2.0);
-        ray.direction.y += self.pixel_angle * pixel_offset[1] as f32
-            + rng.gen_range(-self.pixel_angle / 2.0, self.pixel_angle / 2.0);
-
-        ray.direction.rotate_around_vector(&Vector::x(), self.phi);
-        ray.direction.rotate_around_vector(&Vector::y(), self.theta);
-
-        ray
-    }
-}
-
 /*-----------------------------------------------------------------------------------------------*/
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct OrbitalCamera {
-    camera: Camera,
+    position: Vector,
     focus: Vector,
+
+    theta: f32,
+    phi: f32,
     radius: f32,
+
+    direction_perpendiculars: [Vector; 2],
+    aperture: f32,
+
+    pixel_size: f32,
 }
 
 impl OrbitalCamera {
-    pub fn new(screen_width: u32, screen_height: u32, focus: Vector, radius: f32) -> Self {
+    pub fn new(
+        screen_width: u32,
+        screen_height: u32,
+        focus: Vector,
+        radius: f32,
+        aperture: f32,
+    ) -> Self {
+        let viewing_angle = PI / 6.0;
+        let pixel_size = viewing_angle.tan() / (screen_height as f32 / 2.0);
+
         let mut orbital_cam = Self {
-            camera: Camera::new(
-                screen_width,
-                screen_height,
-                Vector::new(0.0, 0.0, 0.0),
-                0.0,
-                0.0,
-            ),
+            position: Vector::new(0.0, 0.0, 0.0),
             focus,
+            theta: 0.0,
+            phi: 0.0,
             radius,
+
+            direction_perpendiculars: [Vector::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 0.0)],
+            aperture,
+
+            pixel_size,
         };
 
         orbital_cam.refresh_position();
@@ -107,20 +67,50 @@ impl OrbitalCamera {
     }
 
     pub fn rotate(&mut self, dtheta: f32, dphi: f32) {
-        self.camera.rotate(dtheta, dphi);
+        self.theta += dtheta;
+        self.phi += dphi;
+        self.phi = self.phi.min((PI / 2.0) - 0.01).max((-PI / 2.0) + 0.01);
         self.refresh_position();
     }
 
     pub fn sample_pixel_ray(&self, pixel_offset: [i32; 2]) -> Ray {
-        self.camera.sample_pixel_ray(pixel_offset)
+        let mut rng = thread_rng();
+        let radius = self.aperture * (rng.gen_range(0.0, 1.0) as f32).sqrt();
+        let theta = rng.gen_range(0.0, 2.0 * PI);
+
+        let mut random_offset = self.direction_perpendiculars[0]
+            .normalized_to(theta.cos())
+            .plus(&self.direction_perpendiculars[1].normalized_to(theta.sin()));
+        random_offset.normalize_to(radius);
+
+        let random_apeture_position = self.position.plus(&random_offset);
+        let direction = self.focus.minus(&random_apeture_position).normalized();
+
+        let perpendicular_x = direction.cross(&Vector::y());
+        let perpendicular_y = perpendicular_x.cross(&direction);
+
+        let offset0 = -pixel_offset[0] as f32;
+        let offset1 = pixel_offset[1] as f32;
+        let direction = direction
+            .plus(&perpendicular_x.normalized_to(self.pixel_size * rng.gen_range(offset0 - 0.5, offset0 + 0.5)))
+            .plus(&perpendicular_y.normalized_to(self.pixel_size * rng.gen_range(offset1 - 0.5, offset1 + 0.5)));
+        Ray {
+            origin: random_apeture_position,
+            direction,
+        }
     }
 
     fn refresh_position(&mut self) {
         let mut direction = Vector::z();
-        direction.rotate_around_vector(&Vector::x(), self.camera.phi);
-        direction.rotate_around_vector(&Vector::y(), self.camera.theta);
+        direction.rotate_around_vector(&Vector::x(), self.phi);
+        direction.rotate_around_vector(&Vector::y(), self.theta);
         direction.normalize_to(self.radius);
 
-        self.camera.position = self.focus.minus(&direction);
+        self.position = self.focus.minus(&direction);
+
+        self.direction_perpendiculars[0] = direction.cross(&Vector::y()).normalized();
+        self.direction_perpendiculars[1] = self.direction_perpendiculars[0]
+            .cross(&direction)
+            .normalized();
     }
 }

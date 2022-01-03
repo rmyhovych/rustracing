@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use rand::{thread_rng, Rng};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Vector {
     pub x: f32,
     pub y: f32,
