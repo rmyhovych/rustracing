@@ -1,5 +1,5 @@
 pub mod cube;
-mod plane;
+pub mod plane;
 pub mod sphere;
 
 use crate::primitive::{color::Color, contact::RayContact, ray::Ray};

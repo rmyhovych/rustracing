@@ -41,7 +41,7 @@ pub struct RaytracingRunner {
 
 impl RaytracingRunner {
     pub fn new(width: u32, height: u32, focus: Vector) -> Self {
-        let camera = OrbitalCamera::new(width, height, focus, 1.0, 0.1);
+        let camera = OrbitalCamera::new(width, height, focus, 1.0, 0.02);
         Self {
             width,
             height,
@@ -50,8 +50,8 @@ impl RaytracingRunner {
 
             camera,
 
-            work_pool: ThreadPool::new(10),
-            scene: Arc::new(RwLock::new(RaytracingScene::new(6))),
+            work_pool: ThreadPool::new(16),
+            scene: Arc::new(RwLock::new(RaytracingScene::new(4))),
             texture_handle: IncrementalTextureHandle::new(width, height, 100000),
         }
     }

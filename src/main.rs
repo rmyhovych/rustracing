@@ -8,37 +8,145 @@ mod primitive;
 mod raytracing;
 mod texture;
 
+use std::f32::consts::PI;
+
 use display::run;
-use object::{cube::CubeShape, sphere::SphereShape, ShapeProperties, ShapeType};
+use object::{cube::CubeShape, plane::PlaneShape, sphere::SphereShape, ShapeProperties, ShapeType};
 use primitive::{color::Color, vector::Vector};
 use raytracing::runner::RaytracingRunner;
 
 fn main() {
-    let mut scene = RaytracingRunner::new(600, 500, Vector::new(1.5, -0.8, -1.2));
+    let mut scene = RaytracingRunner::new(600, 500, Vector::new(0.0, 0.0, 0.0));
+
     scene.add_object(
         ShapeProperties {
-            color: Color::new(1.0, 0.2, 0.2),
+            color: Color::new(1.0, 1.0, 1.0),
             shape_type: ShapeType::Reflector {
                 transparency: 0.0,
                 roughness: 1.0,
-                density: 1.3,
+                density: 1.6,
             },
         },
-        SphereShape::new(Vector::new(0.0, 0.0, 0.0), 1.0),
+        PlaneShape::new(
+            Vector::new(0.0, 1.0, 0.0),
+            Vector::new(1.0, 0.0, 0.0),
+            PI,
+            2.0,
+            2.0,
+        ),
     );
 
     scene.add_object(
         ShapeProperties {
-            color: Color::new(1.0, 0.2, 0.2),
+            color: Color::new(1.0, 1.0, 1.0),
             shape_type: ShapeType::Reflector {
                 transparency: 0.0,
                 roughness: 1.0,
-                density: 1.3,
+                density: 1.6,
             },
         },
-        SphereShape::new(Vector::new(0.0, 0.0, -3.0), 1.0),
+        PlaneShape::new(
+            Vector::new(0.0, -1.0, 0.0),
+            Vector::new(1.0, 0.0, 0.0),
+            0.0,
+            2.0,
+            2.0,
+        ),
     );
 
+    scene.add_object(
+        ShapeProperties {
+            color: Color::new(1.0, 1.0, 1.0),
+            shape_type: ShapeType::Reflector {
+                transparency: 0.0,
+                roughness: 1.0,
+                density: 1.6,
+            },
+        },
+        PlaneShape::new(
+            Vector::new(0.0, 0.0, 1.0),
+            Vector::new(1.0, 0.0, 0.0),
+            -PI / 2.0,
+            2.0,
+            2.0,
+        ),
+    );
+
+    scene.add_object(
+        ShapeProperties {
+            color: Color::new(1.0, 1.0, 1.0),
+            shape_type: ShapeType::Reflector {
+                transparency: 0.0,
+                roughness: 1.0,
+                density: 1.6,
+            },
+        },
+        PlaneShape::new(
+            Vector::new(0.0, 0.0, -1.0),
+            Vector::new(1.0, 0.0, 0.0),
+            PI / 2.0,
+            2.0,
+            2.0,
+        ),
+    );
+
+    scene.add_object(
+        ShapeProperties {
+            color: Color::new(1.0, 0.3, 0.3),
+            shape_type: ShapeType::Reflector {
+                transparency: 0.0,
+                roughness: 1.0,
+                density: 1.6,
+            },
+        },
+        PlaneShape::new(
+            Vector::new(1.0, 0.0, 0.0),
+            Vector::new(0.0, 0.0, 1.0),
+            PI / 2.0,
+            2.0,
+            2.0,
+        ),
+    );
+
+    scene.add_object(
+        ShapeProperties {
+            color: Color::new(0.3, 1.0, 0.3),
+            shape_type: ShapeType::Reflector {
+                transparency: 0.0,
+                roughness: 1.0,
+                density: 1.6,
+            },
+        },
+        PlaneShape::new(
+            Vector::new(-1.0, 0.0, 0.0),
+            Vector::new(0.0, 0.0, 1.0),
+            -PI / 2.0,
+            2.0,
+            2.0,
+        ),
+    );
+
+    scene.add_object(
+        ShapeProperties {
+            color: Color::new(1.0, 1.0, 1.0),
+            shape_type: ShapeType::Emitter,
+        },
+        CubeShape::new(Vector::new(0.0, 0.995, 0.0), 0.5, 0.5, 0.01),
+    );
+
+    scene.add_object(
+        ShapeProperties {
+            color: Color::new(1.0, 1.0, 1.0),
+            shape_type: ShapeType::Reflector {
+                transparency: 0.75,
+                roughness: 1.0,
+                density: 1.6,
+            },
+        },
+        SphereShape::new(Vector::new(0.6, -0.75, -0.5), 0.3),
+    );
+
+    /*
     scene.add_object(
         ShapeProperties {
             color: Color::new(0.2, 1.0, 0.2),
@@ -51,6 +159,7 @@ fn main() {
         SphereShape::new(Vector::new(1.5, -0.8, -1.2), 0.2),
     );
 
+    /*
     scene.add_object(
         ShapeProperties {
             color: Color::new(0.2, 0.2, 1.0),
@@ -74,11 +183,16 @@ fn main() {
         },
         SphereShape::new(Vector::new(1.1, -0.8, -1.2), 0.2),
     );
-    
+    */
+
     scene.add_object(
         ShapeProperties {
             color: Color::new(1.0, 1.0, 1.0),
-            shape_type: ShapeType::Emitter,
+            shape_type: ShapeType::Reflector {
+                transparency: 0.0,
+                roughness: 1.0,
+                density: 1.6,
+            },
         },
         SphereShape::new(Vector::new(1.2, -0.4, -1.2), 0.2),
     );
@@ -109,27 +223,16 @@ fn main() {
 
     scene.add_object(
         ShapeProperties {
-            color: Color::new(1.0, 1.0, 1.0),
+            color: Color::new(0.5, 1.0, 1.0),
             shape_type: ShapeType::Reflector {
                 transparency: 1.0,
                 roughness: 1.0,
                 density: 1.6,
             },
         },
-        CubeShape::new(Vector::new(1.5, -0.8, -1.6), 0.4, 0.4, 0.4),
+        CubeShape::new(Vector::new(1.5, -0.8, -1.8), 0.4, 0.4, 0.4),
     );
-
-    scene.add_object(
-        ShapeProperties {
-            color: Color::new(1.0, 1.0, 1.0),
-            shape_type: ShapeType::Reflector {
-                transparency: 0.0,
-                roughness: 1.0,
-                density: 1.6,
-            },
-        },
-        CubeShape::new_inverted(Vector::new(1.0, 1.0, -1.5), 6.0, 6.0, 4.0),
-    );
+    */
 
     run(scene);
 }
